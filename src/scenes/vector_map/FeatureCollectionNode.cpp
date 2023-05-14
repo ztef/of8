@@ -10,12 +10,12 @@
 
 FeatureCollectionNode::FeatureCollectionNode(vector<FeatureNode*> newChildren) {
     
-    ofVec3f anchor = getAnchorFromChildren(newChildren);
+    ofVec3f anchorx = getAnchorFromChildren(newChildren);
 
-
-   
     
-    setGlobalPosition(anchor);
+    setGlobalPosition(anchorx);
+
+    anchor = anchorx;
     
     for (int i = 0; i < newChildren.size(); i++) {
         addChild(newChildren[i]);
@@ -146,7 +146,8 @@ ofVec3f FeatureCollectionNode::getAnchorFromChildren(vector<FeatureNode*> childr
     ofVec3f anchor;
     
     for (int i = 0; i < children.size(); i++) {
-        anchor += children[i]->getGlobalPosition() / children.size();
+      //  anchor += children[i]->getGlobalPosition() / children.size();
+          anchor += children[i]->anchor / children.size();
     }
     
     return anchor;

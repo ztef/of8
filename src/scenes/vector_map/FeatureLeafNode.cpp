@@ -16,7 +16,9 @@ FeatureLeafNode::FeatureLeafNode(ofMesh newGeometry, string nodetype) {
     material.setSpecularColor(ofColor(255, 0, 0));
     idString = "";
     type = nodetype;
-    
+
+     
+
     setPosition(geometry.getCentroid());
     
 }

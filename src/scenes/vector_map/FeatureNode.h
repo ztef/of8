@@ -19,6 +19,7 @@ public:
     virtual void customDraw();
     virtual void printPosition(const string &prefix);
     ofShader shader;
+    glm::vec3 anchor;
 };
 
 #endif /* defined(__vectorTileExperiment__FeatureNode__) */

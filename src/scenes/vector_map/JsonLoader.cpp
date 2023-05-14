@@ -10,6 +10,20 @@
 #include <math.h>
 
 
+
+JsonLoader::JsonLoader() {
+    tessellator = ofTessellator();   
+}
+
+FeatureNode* JsonLoader::loadTile(std::string fileName) {
+    if (jsonRoot.open(fileName)) {
+        ofLog(OF_LOG_VERBOSE, "Json parsed successfully");
+    } else {
+        ofLog(OF_LOG_VERBOSE, "Json could not be parsed!");
+    }
+    return loadNodeGraph();
+}
+
 JsonLoader::JsonLoader(std::string fileName) {
     
     if (jsonRoot.open(fileName)) {
@@ -60,11 +74,16 @@ FeatureNode* JsonLoader::loadNodeGraph() {
         if(!jsonRoot[layerNames[i]].empty()){
             layerColor = layerColors[i];
             FeatureCollectionNode* newLayer = parseFeatureCollectionNode(jsonRoot[layerNames[i]]);
-            newLayer->move(0, 0, layerHeights[i]);
-            newLayer->layerColor = layerColor;
-            newLayer->layerName = layerNames[i];
-            layers.push_back(newLayer);
-            cout << layerNames[i] + " layer parsed with " + ofToString(newLayer->children.size()) + " children";
+
+            if(newLayer->children.size()>0){
+
+                newLayer->move(0, 0, layerHeights[i]);
+                newLayer->layerColor = layerColor;
+                newLayer->layerName = layerNames[i];
+                layers.push_back(newLayer);
+                cout << layerNames[i] + " layer parsed with " + ofToString(newLayer->children.size()) + " children";
+            
+            }
         }
     }
     
@@ -153,7 +172,7 @@ FeatureNode* JsonLoader::parseFeatureNode(ofxJSONElement featureJson) {
 
         anchor = getCentroidFromPoints(verts);
         
-        movePoints(&verts, -(anchor));
+        //movePoints(&verts, -(anchor));
         
 
 
@@ -164,26 +183,40 @@ FeatureNode* JsonLoader::parseFeatureNode(ofxJSONElement featureJson) {
     } else if (type.compare("LineString") == 0) {
         
         parseLineGeometry(coords, props, &newMesh, &anchor);
+        anchor = newMesh.getCentroid();
+
+
+
+        //std::vector<glm::vec3>  vecs =  newMesh.getVertices();
+        //movePoints(&vecs, ofVec3f(-(anchor.x), -(anchor.y), 0));
         
     } else if (type.compare("MultiLineString") == 0) {
         
         for (int i = 0; i < coords.size(); i++) {
             parseLineGeometry(coords[i], props, &newMesh, &anchor);
         }
+        anchor = newMesh.getCentroid();
+        
         
     } else if (type.compare("Polygon") == 0) {
         
-        parsePolygonGeometry(coords, props, &newMesh, &anchor, true);
+        parsePolygonGeometry(coords, props, &newMesh, &anchor, false);
         
         ofLog(OF_LOG_VERBOSE, "Polygon mesh with vertices: " + ofToString(newMesh.getVertices()));
         
     } else if (type.compare("MultiPolygon") == 0) {
         
-        for (int i = 0; i < coords.size(); i++) {
+        int cs = coords.size();
+        for (int i = 0; i < cs; i++) {
             ofMesh subMesh = ofMesh();
-            parsePolygonGeometry(coords[i], props, &subMesh, &anchor, false);
+            parsePolygonGeometry(coords[i], props, &subMesh, &anchor, true);
             newMesh.append(subMesh);
         }
+        anchor = newMesh.getCentroid();
+
+        //ofVec3f * vecs = (ofVec3f*) newMesh.getVerticesPointer();
+        //std::vector<glm::vec3>  vecs =  newMesh.getVertices();
+        //movePoints(&vecs, ofVec3f(-(anchor.x), -(anchor.y), 0));
         
     } else if (type.compare("GeometryCollection") == 0) {
         
@@ -195,12 +228,17 @@ FeatureNode* JsonLoader::parseFeatureNode(ofxJSONElement featureJson) {
         
     }
      
+    
+
     newMesh.setColorForIndices(0, newMesh.getNumIndices(), layerColor);
     
     FeatureLeafNode* newNode = new FeatureLeafNode(newMesh, type);
     newNode->idString = featureJson["id"].asString();
-    newNode->setPosition(anchor);
+   // newNode->setPosition(anchor);
+      newNode->anchor = anchor;
+      newNode->setPosition(0,0,0);
     
+
     ofLog(OF_LOG_VERBOSE, "Parsed geometry type: " + type + ", with centroid: " + ofToString(anchor));
     
     return newNode;
@@ -243,9 +281,9 @@ void JsonLoader::parseLineGeometry(ofxJSONElement lineJson, ofxJSONElement props
     
     vector<glm::vec3> verts = parsePointArrayInProjectedCoords(lineJson);
     
-    *anchor = getCentroidFromPoints(verts);
+    //*anchor = getCentroidFromPoints(verts);
     
-    movePoints(&verts, -(*anchor));
+    //movePoints(&verts, -(*anchor));
     
     meshToFill->setMode(OF_PRIMITIVE_LINE_STRIP);
     meshToFill->addVertices(verts);
@@ -257,7 +295,7 @@ void JsonLoader::parseLineGeometry(ofxJSONElement lineJson, ofxJSONElement props
     
 }
 
-void JsonLoader::parsePolygonGeometry(ofxJSONElement polygonJson, ofxJSONElement propsJson, ofMesh *meshToFill, glm::vec3 *anchor, bool move) {
+void JsonLoader::parsePolygonGeometry(ofxJSONElement polygonJson, ofxJSONElement propsJson, ofMesh *meshToFill, glm::vec3 *anchor, bool multi) {
     
     float height = 0;
     float minHeight = 0;
@@ -281,7 +319,10 @@ void JsonLoader::parsePolygonGeometry(ofxJSONElement polygonJson, ofxJSONElement
     
     vector<ofPolyline> polyLines;
     
-    for (int i = 0; i < polygonJson.size(); i++) {
+    int ps = polygonJson.size();
+   
+
+    for (int i = 0; i < ps; i++) {
         
         vector<glm::vec3> verts = parsePointArrayInProjectedCoords(polygonJson[i]);
         
@@ -289,11 +330,12 @@ void JsonLoader::parsePolygonGeometry(ofxJSONElement polygonJson, ofxJSONElement
             *anchor = getCentroidFromPoints(verts);
         }
         
-        if(kind != "earth"){
-            movePoints(&verts, ofVec3f(-(anchor->x), -(anchor->y), height));
+        // kind != "earth"
+        if(!multi){
+           // movePoints(&verts, ofVec3f(-(anchor->x), -(anchor->y), height));
         } else {
-            ofVec3f m = getCentroidFromPoints(verts);
-            movePoints(&verts, ofVec3f(-(m.x), -(m.y), height));
+             
+         // movePoints(&verts, ofVec3f(-(anchor->x), -(anchor->y), height));
             
         }
     
@@ -302,7 +344,9 @@ void JsonLoader::parsePolygonGeometry(ofxJSONElement polygonJson, ofxJSONElement
         
     }
     
-    tessellator.tessellateToMesh(polyLines, OF_POLY_WINDING_ODD, *meshToFill, false);
+     
+        tessellator.tessellateToMesh(polyLines, OF_POLY_WINDING_ODD, *meshToFill, false);
+      
     
     // Add normals for the top surface
     for (int i = 0; i < meshToFill->getNumVertices(); i++) {
@@ -342,7 +386,7 @@ void JsonLoader::parsePolygonGeometry(ofxJSONElement polygonJson, ofxJSONElement
 void JsonLoader::movePoints(vector<glm::vec3> *pts, glm::vec3 offset) {
     
     for (int i = 0; i < pts->size(); i++) {
-        (*pts)[i] += offset;
+      (*pts)[i] += offset;
     }
 }
 

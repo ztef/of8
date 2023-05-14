@@ -24,6 +24,7 @@ public:
     ofMesh geometry;
     string idString;
     string type;
+   
     
     FeatureLeafNode(ofMesh newGeometry, string nodetype);
     FeatureLeafNode(ofMatrix4x4 newTransform);

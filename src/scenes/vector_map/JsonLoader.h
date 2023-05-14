@@ -1,3 +1,4 @@
+#pragma once
 //
 //  JsonLoader.h
 //  vectorTileExperiment
@@ -23,7 +24,10 @@ class JsonLoader {
 public:
     ofxJSONElement jsonRoot;
     
+    JsonLoader();
     JsonLoader(std::string fileName);
+    FeatureNode* loadTile(std::string fileName);
+    
     FeatureNode* loadNodeGraph();
     FeatureCollectionNode* getCollection();
     

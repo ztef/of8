@@ -6,6 +6,7 @@
 //#include "FeatureNode.h"
 #include "FeatureLeafNode.h"
 #include "FeatureCollectionNode.h"
+#include "Map.h"
 
 
 enum {
@@ -33,6 +34,8 @@ public:
     
     ButtonManager buttons;
     
+    Map mapa;
+    
     float fps;
     float fScale;
     float fRotation;
@@ -53,6 +56,8 @@ public:
     
     //FeatureCollectionNode* rootNode;
     FeatureNode* rootNode;
+    FeatureNode* rootNode1;
+    
     ofLight mainLight;
     ofEasyCam camera;
     ofShader shader;

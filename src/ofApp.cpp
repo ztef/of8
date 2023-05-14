@@ -15,9 +15,8 @@ void ofApp::setup(){
     buttons.setup(); // this sets up the events etc..
     escena_zy.setup();
     escena_circulo.setup();
-
-    
-    
+    mapa.setup();
+   
 
 
    // ofSetDataPathRoot("/home/esteban/of/apps/myApps/of8/bin/data/");
@@ -51,11 +50,29 @@ void ofApp::setup(){
     cout << resp.error << endl;
     cout << resp.data.getText() << endl;
     
-     JsonLoader jsonLoader = JsonLoader("https://tile.nextzen.org/tilezen/vector/v1/all/0/0/0.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
-    rootNode = jsonLoader.loadNodeGraph();
+    JsonLoader jsonLoader = JsonLoader();
+
+   // JsonLoader jsonLoader = JsonLoader("https://tile.nextzen.org/tilezen/vector/v1/all/0/0/0.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
+   // JsonLoader jsonLoader1 = JsonLoader("https://tile.nextzen.org/tilezen/vector/v1/all/1/0/0.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
+  
+    //JsonLoader jsonLoader = JsonLoader("https://tile.nextzen.org/tilezen/vector/v1/all/16/19293/24642.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
+    
+   // rootNode = jsonLoader.loadNodeGraph();
+    rootNode = jsonLoader.loadTile("https://tile.nextzen.org/tilezen/vector/v1/all/0/0/0.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
+
     rootNode->setPosition(0,0, 0);
     rootNode->shader = shader;
     rootNode->printPosition("");
+
+   // rootNode1 = jsonLoader1.loadNodeGraph();
+      rootNode1 = jsonLoader.loadTile("https://tile.nextzen.org/tilezen/vector/v1/all/3/3/3.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
+
+    rootNode1->setPosition(0,0, 200);
+    rootNode1->shader = shader;
+    rootNode1->printPosition("");
+
+
+
     
     pois = (FeatureCollectionNode*) jsonLoader.getCollection()->children.at(0);
     
@@ -134,7 +151,7 @@ void ofApp::update(){
 
     escena_zy.update();
     escena_circulo.update();
-
+    mapa.update();
 
 
 }
@@ -195,8 +212,9 @@ void ofApp::draw(){
     }
     if(sceneSelect == ESCENA_MAPA_VECTORIAL){
         rootNode->draw();
-        
-        
+        //rootNode1->draw();
+        //rootNode1->setScale(1000);
+        mapa.draw();
       
     }
 
@@ -238,7 +256,8 @@ void ofApp::draw(){
         int nearestIndex = 0;
         glm::vec3 mouse(mouseX, mouseY,0);
         for(int i = 0; i < n; i++) {
-            glm::vec3 cur = camera.worldToScreen(pois->children.at(i)->getGlobalPosition());
+           //  glm::vec3 cur = camera.worldToScreen(pois->children.at(i)->getGlobalPosition());
+            glm::vec3 cur = camera.worldToScreen(pois->children.at(i)->anchor - pois->anchor) ;
             ofSetColor(ofColor::red);
             //ofDrawCylinder(cur.x,cur.y,0,0.5,  10);
             //glm::vec3 cur = building0->geometry.getVertex(i);
@@ -280,6 +299,8 @@ void ofApp::draw(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
    //  cout << "FeatureLeafNode at: " + ofToString(getPosition()) << endl;
+   mapa.Load("https://tile.nextzen.org/tilezen/vector/v1/all/3/3/3.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
+   mapa.Load("https://tile.nextzen.org/tilezen/vector/v1/all/3/3/2.json?api_key=HjxoLw7IQJWSTo4lgErmIQ");
 }
 
 //--------------------------------------------------------------
